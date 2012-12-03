@@ -1,4 +1,5 @@
-setwd("/Users/francinebennett/Desktop/analysis/NHS_analysis/")
+# setwd("/Users/francinebennett/Desktop/analysis/NHS_analysis/")
+setwd("/home/david/src/ohc/nhs-prescriptions/data/prescriptions")
 
 # Load packages
 require(ggplot2)
