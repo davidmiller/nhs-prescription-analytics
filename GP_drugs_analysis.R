@@ -6,6 +6,10 @@ require(ggplot2)
 require(plyr)
 require(googleVis)
 require(gdata)
+require(reshape)
+require(RJSONIO)
+
+source("GP_fun.R")
 
 # load aggregate.data
 file.list<-read.csv("file_list.txt")$x
@@ -54,6 +58,7 @@ statins<-statins[,c("Practice.code","Month","items.thisdrug","Group.1","Group.2"
 statins$pct.prop.atorva<-statins$items.thisdrug/statins$x
 statins<-subset(statins,x>50) # Only include clinics with >50 statin prescriptions/month
 statins$Month<-as.Date(paste(statins$Month,"01"),"%Y%m%d")
+
 boxplot(statins$pct.prop.atorva~statins$Month,ylim=c(0.35,1),main="Percent statin items which are Atorvastatin, by month")
 boxplot(statins$items.thisdrug~statins$Month,ylim=c(0,300),main="Number of Atorvastatin items prescribed, by month")
 
@@ -118,6 +123,7 @@ pct.totals<-subset(pct.totals,category=="statin")
 pct.totals$item.bad<-FALSE
 pct.totals[pct.totals$Drug %in% c("Atorvastatin","Rosuvastatin Calcium"),]$item.bad<-TRUE
 pct.totals<-aggregate(pct.totals$items.thisdrug,by=list(pct.totals$item.bad,pct.totals$PCT.code),FUN=sum)
+
 pct.totals<-cast(pct.totals,Group.2~Group.1)
 names(pct.totals)<-c("PCT.code","ok.drugs","problem.drugs")
 pct.totals$pct.problem<-pct.totals$problem.drugs/(pct.totals$problem.drugs+pct.totals$ok.drugs)
@@ -126,6 +132,30 @@ pct.totals<-pct.totals[,c("PCT.code","total.items.month","pct.problem")]
 pct.totals$pct.problem<-round(pct.totals$pct.problem,3)
 pct.totals$total.items.month<-round(pct.totals$total.items.month,0)
 write.csv(pct.totals,"pct_statin_totals.csv",row.names=FALSE)
+
+# Practice mapping
+practice.totals <- subset(spend.practice.totals,category=="statin")
+practice.totals$item.bad <- FALSE
+practice.totals[practice.totals$Drug %in% c("Atorvastatin","Rosuvastatin Calcium"),]$item.bad<-TRUE
+
+practice.agg <- aggregate(
+  practice.totals$items.thisdrug,by=list(practice.totals$item.bad,
+                                         practice.totals$Practice.code),FUN=sum)
+practice.agg <- cast(practice.agg,Group.2~Group.1)
+names(practice.agg) <- c("Practice.code","ok.drugs","problem.drugs")
+practice.agg$practice.problem <- practice.agg$problem.drugs/(
+  practice.agg$problem.drugs+practice.agg$ok.drugs)
+practice.agg$total.items.month <- (practice.agg$problem.drugs+practice.agg$ok.drugs)/length(file.list)
+practice.agg <- practice.agg[,c("Practice.code", "total.items.month", "practice.problem")]
+practice.agg$total.items.month <- round(practice.agg$total.items.month, 0)
+practice.agg$practice.problem <- round(practice.agg$practice.problem, 3)
+
+practice.agg <- subset(practice.agg, total.items.month > 0)
+practice.details <- unique(practice.totals[,c("Practice.code", "Practice.name", "Postcode")])
+practice.located <- merge(practice.agg, practice.details, all.x=TRUE)
+practice.coded <- geoCode(practice.located)
+
+write.csv(practice.located, "practice_statin_totals.csv", row.names=FALSE)
 
 # Roll up to CCG level for mapping
 ccg.rollup<-read.xls("list-of-proposed-practices-ccg.xls",sheet="Practice list")
@@ -147,22 +177,7 @@ write.csv(ccg.totals,"ccg_statin_totals.csv",row.names=FALSE)
 median(subset(statin.timeseries,Drug=="Atorvastatin")$Spend)*problem.drugs[problem.drugs$Drug=="Atorvastatin",]$saving
 median(subset(statin.timeseries,Drug=="Rosuvastatin Calcium")$Spend)*problem.drugs[problem.drugs$Drug=="Rosuvastatin Calcium",]$saving
 
-# JSON format for time series charts
-require(RJSONIO)
-toJSONarray <- function(dtf){
-  clnms <- colnames(dtf)
-  name.value <- function(i){
-    quote <- '';
-    if(class(dtf[, i])!='numeric'){
-      quote <- '"';
-    }
-    paste('"', i, '" : ', quote, dtf[,i], quote, sep='')
-  }
-  objs <- apply(sapply(clnms, name.value), 1, function(x){paste(x, collapse=', ')})
-  objs <- paste('{', objs, '}')
-  res <- paste('[', paste(objs, collapse=', '), ']')
-  return(res)
-}
+
 atorva<-subset(statin.timeseries,Drug=="Atorvastatin")[,c("Month","Spend")]
 names(atorva)<-c("x","y")
 atorva$x<-as.numeric(as.Date(atorva$x))*24*60*60
