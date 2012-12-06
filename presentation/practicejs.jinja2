@@ -1,0 +1,29 @@
+
+var markers = new L.MarkerClusterGroup({disableClusterAtZoom: 14});
+
+//var markers = [];
+// var markers = new L.LayerGroup()
+
+{% for m in markers %}
+  var marker{{loop.index}} = L.marker([{{m[-2]}},{{m[-1]}}]);
+  marker{{loop.index}}.bindPopup("<b>{{m[3].strip()}}</b> ({{m[0]}})<br>{{m[2]|float * 100|round(1, 'floor')}}% statins proprietary<br>{{m[1]}} statin items per month prescribed")
+  markers.addLayer(marker{{loop.index}});
+//  markers.push(marker{{loop.index}});
+{% endfor %}
+
+//var markergroup = new L.LayerGroup(markers)
+
+function onZoomend(){
+    if(map.getZoom()>=10)
+     {
+     map.addLayer(markers)};
+
+    if(map.getZoom()<10)
+     {
+         map.removeLayer(markers);
+  };
+ };
+
+map.on('zoomend', onZoomend);
+
+//map.addLayer(markers);
