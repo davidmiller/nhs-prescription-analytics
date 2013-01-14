@@ -1,4 +1,5 @@
-setwd("/Users/francinebennett/Desktop/analysis/NHS_analysis/")
+#setwd("/Users/francinebennett/Desktop/analysis/NHS_analysis/")
+setwd("/home/david/src/ohc/data")
 
 # Load packages
 require(ggplot2)
@@ -8,14 +9,22 @@ require(RSQLite)
 require(gdata)
 
 # List filenames (currently up to July 2012. Present analysis only includes up to May, as after that the Atorva price changes)
-file.list<-c("T201109PDP IEXT.csv","T201110PDP IEXT.csv","T201111PDP IEXT.csv","T201112PDP IEXT.csv","T201201PDP IEXT.csv","T201202PDP IEXT.csv","T201203PDP IEXT.csv","T201204PDP IEXT.csv","T201205PDP IEXT.CSV")
+file.list<-c("T201109PDP IEXT.CSV",
+             "T201110PDP IEXT.CSV",
+             "T201111PDP IEXT.CSV",
+             "T201112PDP IEXT.CSV",
+             "T201201PDP IEXT.CSV",
+             "T201202PDP IEXT.CSV",
+             "T201203PDP IEXT.CSV",
+             "T201204PDP IEXT.CSV",
+             "T201205PDP IEXT.CSV")
              #,"T201206PDP IEXT.csv","T201207PDP IEXT.csv")
 write.csv(file.list,"file_list.txt",row.names=FALSE)
 addresses<-read.csv("T201204ADD REXT.CSV",header=FALSE)
 short.addresses<-addresses[,c(2,3,6,8)]
 
 # Create list of potential problem drugs
-GP.drugs <- read.csv("T201109PDP IEXT.csv", header=TRUE)
+GP.drugs <- read.csv("T201109PDP IEXT.CSV", header=TRUE)
 drug.list<-unique(GP.drugs$BNF.NAME)
 drug.list<-drug.list[order(drug.list)]
 statins<-drug.list[grep("statin",drug.list)]
@@ -32,6 +41,7 @@ sartans<-c(
   "Losartan Potassium")
 
 problem.drugs<-as.data.frame(rbind(cbind(as.character(statins),"statin"),cbind(clopidogrel,"clopidogrel"),cbind(sartans,"sartan")))
+
 names(problem.drugs)<-c("Drug","category")
 problem.drugs$Drug<-trim(problem.drugs$Drug)
 
@@ -63,10 +73,11 @@ names(s)<-c("Practice.code","Month","Drug","cost.thisdrug","items.thisdrug")
 s<-merge(s,surgery.subtotal,all.x=TRUE)
 s<-merge(s,short.addresses,by.x="Practice.code",by.y="V2",all.x=TRUE)
 spend.practice<-rbind(spend.practice,s)
-}  
+}
 
 ## Calculate Simvastatin 40mg price and other median actual prices
-preparation.level<-read.csv("T201206PDPI+BNFT.csv")
+#preparation.level<-read.csv("T201206PDPI+BNFT.csv")
+preparation.level<-read.csv("T201206PDPI BNFT.CSV")
 simvastatin<-preparation.level[grep("Simvastatin_Tab 40mg",preparation.level$BNF.NAME),]
 simva.price<-median(simvastatin$ACT.COST/simvastatin$ITEMS)
 write.csv(simva.price,"simva_price.csv",row.names=FALSE)

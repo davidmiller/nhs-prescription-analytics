@@ -10,7 +10,7 @@ c = con.cursor()
 
 # g = geocoders.Google(domain="maps.google.co.uk")
 
-data = ffs.Path('/home/david/src/ohc/nhs-prescriptions/data/prescriptions')
+data = ffs.Path('/home/david/src/ohc/nhs-prescription-analytics/data')
 
 statins = data / 'practice_statin_totals.csv'
 coded = data / 'practice_statin_totals_geocoded.csv'

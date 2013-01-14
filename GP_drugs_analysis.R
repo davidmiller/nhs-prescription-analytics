@@ -1,5 +1,5 @@
 # setwd("/Users/francinebennett/Desktop/analysis/NHS_analysis/")
-setwd("/home/david/src/ohc/nhs-prescriptions/data/prescriptions")
+setwd("/home/david/src/ohc/data")
 
 # Load packages
 require(ggplot2)
@@ -62,6 +62,7 @@ statins$Month<-as.Date(paste(statins$Month,"01"),"%Y%m%d")
 boxplot(statins$pct.prop.atorva~statins$Month,ylim=c(0.35,1),main="Percent statin items which are Atorvastatin, by month")
 boxplot(statins$items.thisdrug~statins$Month,ylim=c(0,300),main="Number of Atorvastatin items prescribed, by month")
 
+##### here
 ## Looking for connections between overprescription by drug
 
 # Create data frame of % of category and % of total prescriptions that are potentially problematic
@@ -192,6 +193,3 @@ rosuva<-subset(statin.timeseries,Drug=="Rosuvastatin Calcium")[,c("Month","Spend
 names(rosuva)<-c("x","y")
 rosuva$x<-as.numeric(as.Date(rosuva$x))*24*60*60
 toJSONarray(rosuva)
-
-
-

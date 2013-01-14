@@ -2,7 +2,7 @@
 import ffs
 from ffs.contrib import mold
 
-data = ffs.Path('/home/david/src/ohc/nhs-prescriptions/data/prescriptions')
+data = ffs.Path('/home/david/src/ohc/nhs-prescription-analytics/data')
 
 coded = data / 'practice_statin_totals_geocoded.csv'
 
@@ -13,7 +13,6 @@ with coded.csv() as csv:
 tpl = ffs.Path('presentation/practicejs.jinja2')
 
 outfile = data / 'practice.js'
-outfile.truncate()
+if outfile:
+    outfile.truncate()
 outfile << mold.cast(tpl, markers=markers)
-
-
